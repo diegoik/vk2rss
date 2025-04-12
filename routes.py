@@ -311,7 +311,9 @@ def import_feeds():
     if request.method == 'POST':
         urls_text = request.form.get('urls', '')
         default_title = request.form.get('default_title', 'VK Feed')
+        vk_source_type = request.form.get('vk_source_type', 'group')
         include_attachments = 'include_attachments' in request.form
+        include_comments = 'include_comments' in request.form
         is_public = 'is_public' in request.form
         items_count = int(request.form.get('items_count', 20))
         
@@ -338,10 +340,12 @@ def import_feeds():
             title = parts[1].strip() if len(parts) > 1 else default_title
             
             try:
-                # Extract source type and ID from URL
+                # Extract ID from URL
                 from vk_api import extract_vk_id_from_url, get_source_info
                 source_id = extract_vk_id_from_url(url)
-                source_info = get_source_info(None, source_id)
+                
+                # Get source info using the selected source type
+                source_info = get_source_info(vk_source_type, source_id)
                 
                 # Create a better title if none was provided
                 if not title or title == default_title:
@@ -352,11 +356,11 @@ def import_feeds():
                     user_id=current_user.id,
                     title=title,
                     description=source_info.get('description', ''),
-                    vk_source_type='group',  # Default to group
-                    vk_source_id=url,  # Use original URL to preserve format
+                    vk_source_type=vk_source_type,
+                    vk_source_id=source_id,
                     items_count=items_count,
                     include_attachments=include_attachments,
-                    include_comments=False,  # Default to no comments
+                    include_comments=include_comments,
                     is_public=is_public,
                     access_token=generate_access_token()
                 )
@@ -364,11 +368,14 @@ def import_feeds():
                 db.session.add(feed)
                 created_feeds += 1
             except Exception as e:
+                logger.error(f"Error importing feed {url}: {str(e)}")
                 errors.append(f"Error al procesar {url}: {str(e)}")
         
         if created_feeds > 0:
             db.session.commit()
             flash(f'Se han creado {created_feeds} feeds correctamente.', 'success')
+        else:
+            flash('No se ha podido crear ningún feed. Por favor, verifica las URLs e inténtalo de nuevo.', 'warning')
         
         if errors:
             for error in errors:

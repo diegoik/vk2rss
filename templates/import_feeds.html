@@ -21,6 +21,7 @@
             <pre class="bg-light p-3 rounded">
 vk.com/wall-142369524  # Noticias de tecnología
 vk.com/wall-161750167?own=1  # Canal oficial
+vk.com/group_name  # Mi grupo favorito
             </pre>
             <div class="alert alert-info">
                 <i class="fas fa-info-circle"></i> Formatos de URL compatibles:
@@ -29,7 +30,11 @@ vk.com/wall-161750167?own=1  # Canal oficial
                     <li>vk.com/wall-123456?own=1</li>
                     <li>https://vk.com/wall-123456</li>
                     <li>https://vk.com/group_name</li>
+                    <li>vk.com/id12345 (para usuarios)</li>
                 </ul>
+            </div>
+            <div class="alert alert-warning mt-3">
+                <i class="fas fa-exclamation-triangle"></i> <strong>Importante:</strong> Selecciona el tipo de fuente correcto (Grupo, Usuario o Página pública) según el tipo de contenido que estés importando. Todas las URLs en el listado serán procesadas con el mismo tipo de fuente.
             </div>
         </div>
     </div>
@@ -51,6 +56,16 @@ vk.com/wall-161750167?own=1  # Canal oficial
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
+                            <label for="vk_source_type" class="form-label">Tipo de fuente</label>
+                            <select class="form-select" id="vk_source_type" name="vk_source_type" required>
+                                <option value="group" selected>Grupo</option>
+                                <option value="user">Usuario</option>
+                                <option value="page">Página pública</option>
+                            </select>
+                            <div class="form-text">Tipo de fuente de VK para todas las URLs importadas.</div>
+                        </div>
+                        
+                        <div class="mb-3">
                             <label for="items_count" class="form-label">Número de publicaciones por feed</label>
                             <input type="number" class="form-control" id="items_count" name="items_count" value="20" min="1" max="100">
                             <div class="form-text">Cantidad de publicaciones que aparecerán en cada feed RSS.</div>
@@ -61,6 +76,11 @@ vk.com/wall-161750167?own=1  # Canal oficial
                             <div class="form-check mb-2">
                                 <input type="checkbox" class="form-check-input" id="include_attachments" name="include_attachments" value="1" checked>
                                 <label class="form-check-label" for="include_attachments">Incluir adjuntos (imágenes, enlaces, etc.)</label>
+                            </div>
+                            
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" id="include_comments" name="include_comments" value="1">
+                                <label class="form-check-label" for="include_comments">Incluir comentarios</label>
                             </div>
                             
                             <div class="form-check">

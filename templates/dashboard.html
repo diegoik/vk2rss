@@ -23,11 +23,11 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Title</th>
-                                <th>VK Source</th>
-                                <th>Last Updated</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th>Título</th>
+                                <th>Fuente VK</th>
+                                <th>Última actualización</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -52,41 +52,41 @@
                                     </td>
                                     <td>
                                         {% if feed.is_public %}
-                                            <span class="badge bg-success">Public</span>
+                                            <span class="badge bg-success">Público</span>
                                         {% else %}
-                                            <span class="badge bg-info">Private</span>
+                                            <span class="badge bg-info">Privado</span>
                                         {% endif %}
                                     </td>
                                     <td>
                                         <div class="dropdown">
                                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="feedActionDropdown{{ feed.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Actions
+                                                Acciones
                                             </button>
                                             <ul class="dropdown-menu" aria-labelledby="feedActionDropdown{{ feed.id }}">
                                                 <li>
                                                     <a class="dropdown-item" href="{{ url_for('preview_feed', feed_id=feed.id) }}">
-                                                        <i class="fas fa-eye"></i> Preview
+                                                        <i class="fas fa-eye"></i> Previsualizar
                                                     </a>
                                                 </li>
                                                 <li>
                                                     <a class="dropdown-item" href="{{ get_feed_url(feed) }}" target="_blank">
-                                                        <i class="fas fa-rss"></i> View RSS
+                                                        <i class="fas fa-rss"></i> Ver RSS
                                                     </a>
                                                 </li>
                                                 <li>
                                                     <a class="dropdown-item" href="#" onclick="copyToClipboard('{{ get_feed_url(feed) }}'); return false;">
-                                                        <i class="fas fa-copy"></i> Copy URL
+                                                        <i class="fas fa-copy"></i> Copiar URL
                                                     </a>
                                                 </li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li>
                                                     <a class="dropdown-item" href="{{ url_for('edit_feed', feed_id=feed.id) }}">
-                                                        <i class="fas fa-edit"></i> Edit
+                                                        <i class="fas fa-edit"></i> Editar
                                                     </a>
                                                 </li>
                                                 <li>
                                                     <a class="dropdown-item text-danger" href="#" onclick="confirmDelete('{{ feed.title }}', '{{ url_for('delete_feed', feed_id=feed.id) }}'); return false;">
-                                                        <i class="fas fa-trash"></i> Delete
+                                                        <i class="fas fa-trash"></i> Eliminar
                                                     </a>
                                                 </li>
                                             </ul>
@@ -103,14 +103,14 @@
         <div class="card border-0 shadow text-center p-5">
             <div class="card-body">
                 <i class="fas fa-rss-square text-secondary mb-3" style="font-size: 3rem;"></i>
-                <h2 class="h4">No RSS feeds yet</h2>
-                <p class="text-muted">You haven't created any RSS feeds yet. Create your first feed to get started.</p>
+                <h2 class="h4">Aún no hay feeds RSS</h2>
+                <p class="text-muted">Todavía no has creado ningún feed RSS. Crea tu primer feed para comenzar.</p>
                 <div class="d-flex justify-content-center gap-2">
                     <a href="{{ url_for('import_feeds') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-file-import"></i> Import Multiple Feeds
+                        <i class="fas fa-file-import"></i> Importar Múltiples Feeds
                     </a>
                     <a href="{{ url_for('add_feed') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add Your First Feed
+                        <i class="fas fa-plus"></i> Añadir Tu Primer Feed
                     </a>
                 </div>
             </div>
@@ -123,17 +123,17 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Eliminación</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to delete the feed "<span id="feedTitle"></span>"?
-                <p class="text-danger mt-2">This action cannot be undone.</p>
+                ¿Estás seguro de que deseas eliminar el feed "<span id="feedTitle"></span>"?
+                <p class="text-danger mt-2">Esta acción no se puede deshacer.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <form id="deleteForm" method="POST">
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
                 </form>
             </div>
         </div>
