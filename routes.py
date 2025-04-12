@@ -333,6 +333,45 @@ def server_error(e):
     """Handle 500 errors."""
     return render_template('500.html'), 500
 
+@app.route('/export-opml')
+@login_required
+def export_opml():
+    """Export user's feeds as OPML for importing into other readers like Feedly."""
+    # Obtener todos los feeds del usuario
+    feeds = VKFeed.query.filter_by(user_id=current_user.id).all()
+    
+    # Crear el documento XML para OPML
+    opml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    opml += '<opml version="1.0">\n'
+    opml += '  <head>\n'
+    opml += f'    <title>VK2RSS Feeds de {current_user.username}</title>\n'
+    opml += f'    <dateCreated>{datetime.now().strftime("%a, %d %b %Y %H:%M:%S %z")}</dateCreated>\n'
+    opml += '  </head>\n'
+    opml += '  <body>\n'
+    opml += '    <outline text="VK2RSS Feeds" title="VK2RSS Feeds">\n'
+    
+    # Añadir cada feed como un outline
+    for feed in feeds:
+        # Obtener la URL completa del feed
+        feed_url = url_for('get_feed', feed_id=feed.id, token=feed.access_token, _external=True)
+        
+        # Escape XML entities en el título
+        title = feed.title.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&apos;')
+        
+        # Añadir el outline para este feed
+        opml += f'      <outline text="{title}" title="{title}" type="rss" xmlUrl="{feed_url}" htmlUrl="{feed_url}"/>\n'
+    
+    # Cerrar los tags
+    opml += '    </outline>\n'
+    opml += '  </body>\n'
+    opml += '</opml>'
+    
+    # Devolver como archivo para descargar
+    response = Response(opml, mimetype='text/x-opml')
+    response.headers['Content-Disposition'] = f'attachment; filename=vk2rss_feeds_{current_user.username}.opml'
+    
+    return response
+
 @app.route('/import-feeds', methods=['GET', 'POST'])
 @login_required
 def import_feeds():

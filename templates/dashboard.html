@@ -7,6 +7,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">Mis Feeds RSS</h1>
         <div class="d-flex gap-2">
+            <a href="{{ url_for('export_opml') }}" class="btn btn-outline-secondary" title="Exportar para importar en Feedly u otros lectores RSS">
+                <i class="fas fa-file-export"></i> Exportar OPML
+            </a>
             <a href="{{ url_for('import_feeds') }}" class="btn btn-outline-primary">
                 <i class="fas fa-file-import"></i> Importar Múltiples Feeds
             </a>
