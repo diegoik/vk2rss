@@ -71,7 +71,7 @@ class VKAPIClient:
         Get posts from a user or community wall.
         
         Args:
-            owner_id: ID of the user or community (negative for communities)
+            owner_id: ID of the user or community (negative for communities) or domain
             count: Number of posts to retrieve
             offset: Offset for pagination
             
@@ -79,11 +79,21 @@ class VKAPIClient:
             List of wall posts
         """
         params = {
-            'owner_id': owner_id,
             'count': count,
             'offset': offset,
             'extended': 1  # Get extended information (profiles, groups)
         }
+        
+        # Process the owner_id parameter properly
+        if '/' in owner_id or 'vk.com' in owner_id:
+            owner_id = extract_vk_id_from_url(owner_id)
+            logger.debug(f"Extracted ID for wall.get: {owner_id}")
+        
+        # Check if owner_id is numeric ID or domain name
+        if owner_id.lstrip('-').isdigit():
+            params['owner_id'] = owner_id
+        else:
+            params['domain'] = owner_id
         
         return self._make_request('wall.get', params)
     
@@ -97,6 +107,11 @@ class VKAPIClient:
         Returns:
             Group information
         """
+        # Process URL or complex ID
+        if isinstance(group_id, str) and ('/' in group_id or 'vk.com' in group_id):
+            group_id = extract_vk_id_from_url(group_id)
+            logger.debug(f"Extracted group ID: {group_id}")
+        
         params = {
             'group_id': group_id,
             'fields': 'description,name,screen_name'
@@ -114,6 +129,11 @@ class VKAPIClient:
         Returns:
             User information
         """
+        # Process URL or complex ID
+        if isinstance(user_id, str) and ('/' in user_id or 'vk.com' in user_id):
+            user_id = extract_vk_id_from_url(user_id)
+            logger.debug(f"Extracted user ID: {user_id}")
+        
         params = {
             'user_ids': user_id,
             'fields': 'photo_100,screen_name'
@@ -131,11 +151,84 @@ class VKAPIClient:
         Returns:
             Object type and ID
         """
+        # Process URL or complex ID first
+        if isinstance(screen_name, str) and ('/' in screen_name or 'vk.com' in screen_name):
+            screen_name = extract_vk_id_from_url(screen_name)
+            logger.debug(f"Extracted screen name: {screen_name}")
+        
+        # Skip attempting to resolve if it's already a numeric ID
+        if isinstance(screen_name, str) and screen_name.lstrip('-').isdigit():
+            # Determine the type based on the sign (negative = group, positive = user)
+            object_id = int(screen_name)
+            object_type = 'user' if object_id > 0 else 'group'
+            return {'type': object_type, 'object_id': abs(object_id)}
+        
+        # Otherwise, call the API to resolve the screen name
         params = {
             'screen_name': screen_name
         }
         
         return self._make_request('utils.resolveScreenName', params)
+
+def extract_vk_id_from_url(url):
+    """
+    Extract VK ID from a URL.
+    
+    Args:
+        url: VK URL (e.g., https://vk.com/group_name or https://vk.com/wall-123456)
+        
+    Returns:
+        Extracted ID or the original string if no ID is found
+    """
+    import re
+    
+    if not url:
+        return url
+    
+    # Log the original URL for debugging
+    logger.debug(f"Extracting ID from URL: {url}")
+    
+    # Extract numeric ID for a group with a negative ID
+    group_id_pattern = r'group(-?\d+)'
+    group_id_match = re.search(group_id_pattern, url)
+    if group_id_match:
+        return group_id_match.group(1)
+    
+    # Extract numeric ID for a user with ID
+    user_id_pattern = r'id(\d+)'
+    user_id_match = re.search(user_id_pattern, url)
+    if user_id_match:
+        return user_id_match.group(1)
+    
+    # Extract ID from wall URL pattern
+    wall_pattern = r'wall(-?\d+)'
+    wall_match = re.search(wall_pattern, url)
+    if wall_match:
+        return wall_match.group(1)
+    
+    # Extract numeric group ID after minus sign (common in URLs like vk.com/public-123456)
+    minus_id_pattern = r'(?:public|club)-(\d+)'
+    minus_id_match = re.search(minus_id_pattern, url)
+    if minus_id_match:
+        return f"-{minus_id_match.group(1)}"
+    
+    # Extract ID or screen name from VK URL
+    url_pattern = r'vk\.com/(?!wall|id|club|public|group)([a-zA-Z0-9._]+)'
+    url_match = re.search(url_pattern, url)
+    if url_match:
+        return url_match.group(1)
+    
+    # Extract just the last part of the URL for domains
+    last_part_pattern = r'/([^/]+)/?$'
+    last_part_match = re.search(last_part_pattern, url)
+    if last_part_match:
+        # Skip some common patterns we've already checked
+        last_part = last_part_match.group(1)
+        if last_part not in ['wall', 'id', 'club', 'public', 'group']:
+            return last_part
+    
+    # If no patterns match, return the original string
+    return url
 
 def get_source_info(source_type, source_id):
     """
@@ -149,6 +242,11 @@ def get_source_info(source_type, source_id):
         Dictionary with information about the source
     """
     client = VKAPIClient()
+    
+    # Process URLs or complex IDs
+    if '/' in source_id or 'vk.com' in source_id:
+        source_id = extract_vk_id_from_url(source_id)
+        logger.debug(f"Extracted ID from URL: {source_id}")
     
     # Try to resolve screen name if it's not a numeric ID
     if not source_id.lstrip('-').isdigit():
