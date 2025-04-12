@@ -123,11 +123,15 @@ def add_feed():
             if not title:
                 title = source_info.get('title')
                 
-            # Create the feed
+            # Truncar el título si es más largo que 120 caracteres (límite de la BD)
+            if title and len(title) > 120:
+                title = title[:117] + '...'
+                
+            # Create the feed - sin descripción en ruso
             feed = VKFeed(
                 user_id=current_user.id,
                 title=title,
-                description=description,
+                description="",  # No incluimos descripción en ruso
                 vk_source_type=vk_source_type,
                 vk_source_id=vk_source_id,
                 items_count=items_count,
@@ -161,13 +165,18 @@ def edit_feed(feed_id):
         
     if request.method == 'POST':
         feed.title = request.form.get('title')
-        feed.description = request.form.get('description', '')
+        # No guardamos descripción para evitar problemas con caracteres cirílicos
+        feed.description = ""  
         feed.vk_source_type = request.form.get('vk_source_type')
         feed.vk_source_id = request.form.get('vk_source_id', '').strip()
         feed.items_count = int(request.form.get('items_count', 20))
         feed.include_attachments = 'include_attachments' in request.form
         feed.include_comments = 'include_comments' in request.form
         feed.is_public = 'is_public' in request.form
+        
+        # Truncar el título si es más largo que 120 caracteres
+        if feed.title and len(feed.title) > 120:
+            feed.title = feed.title[:117] + '...'
         
         # Basic validation
         if not all([feed.title, feed.vk_source_type, feed.vk_source_id]):
@@ -351,11 +360,15 @@ def import_feeds():
                 if not title or title == default_title:
                     title = source_info.get('title', default_title)
                 
-                # Create a new feed
+                # Truncar el título si es más largo que 120 caracteres (límite de la BD)
+                if len(title) > 120:
+                    title = title[:117] + '...'
+                
+                # Create a new feed - sin descripción para evitar problemas con caracteres cirílicos
                 feed = VKFeed(
                     user_id=current_user.id,
                     title=title,
-                    description=source_info.get('description', ''),
+                    description="",  # No incluimos la descripción en ruso
                     vk_source_type=vk_source_type,
                     vk_source_id=source_id,
                     items_count=items_count,

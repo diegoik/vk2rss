@@ -28,11 +28,11 @@ class VKFeed(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     title = db.Column(db.String(120), nullable=False)
-    description = db.Column(db.String(255))
+    description = db.Column(db.Text)  # Cambiado a Text para permitir descripciones largas
     
     # VK source information
     vk_source_type = db.Column(db.String(20), nullable=False)  # 'user', 'group', 'page'
-    vk_source_id = db.Column(db.String(100), nullable=False)
+    vk_source_id = db.Column(db.String(255), nullable=False)  # Aumentado a 255 para URLs largas
     
     # RSS feed configuration
     items_count = db.Column(db.Integer, default=20)
