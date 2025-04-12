@@ -38,6 +38,7 @@ class VKFeed(db.Model):
     items_count = db.Column(db.Integer, default=20)
     include_attachments = db.Column(db.Boolean, default=True)
     include_comments = db.Column(db.Boolean, default=False)
+    translate_titles = db.Column(db.Boolean, default=True)  # Traducir automáticamente los títulos
     
     # Feed access control
     is_public = db.Column(db.Boolean, default=False)
