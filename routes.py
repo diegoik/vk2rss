@@ -303,3 +303,77 @@ def page_not_found(e):
 def server_error(e):
     """Handle 500 errors."""
     return render_template('500.html'), 500
+
+@app.route('/import-feeds', methods=['GET', 'POST'])
+@login_required
+def import_feeds():
+    """Import multiple feeds from a list of URLs."""
+    if request.method == 'POST':
+        urls_text = request.form.get('urls', '')
+        default_title = request.form.get('default_title', 'VK Feed')
+        include_attachments = 'include_attachments' in request.form
+        is_public = 'is_public' in request.form
+        items_count = int(request.form.get('items_count', 20))
+        
+        # Parse the URLs from the text input
+        url_lines = [line.strip() for line in urls_text.split('\n') if line.strip()]
+        
+        created_feeds = 0
+        errors = []
+        
+        for line in url_lines:
+            # Skip comments if line starts with #
+            if line.startswith('#'):
+                continue
+                
+            # Split the line into URL and optional comment/title
+            parts = line.split('#', 1)
+            url = parts[0].strip()
+            
+            # Skip empty lines
+            if not url:
+                continue
+                
+            # Use comment as title if available, otherwise use default title
+            title = parts[1].strip() if len(parts) > 1 else default_title
+            
+            try:
+                # Extract source type and ID from URL
+                from vk_api import extract_vk_id_from_url, get_source_info
+                source_id = extract_vk_id_from_url(url)
+                source_info = get_source_info(None, source_id)
+                
+                # Create a better title if none was provided
+                if not title or title == default_title:
+                    title = source_info.get('title', default_title)
+                
+                # Create a new feed
+                feed = VKFeed(
+                    user_id=current_user.id,
+                    title=title,
+                    description=source_info.get('description', ''),
+                    vk_source_type='group',  # Default to group
+                    vk_source_id=url,  # Use original URL to preserve format
+                    items_count=items_count,
+                    include_attachments=include_attachments,
+                    include_comments=False,  # Default to no comments
+                    is_public=is_public,
+                    access_token=generate_access_token()
+                )
+                
+                db.session.add(feed)
+                created_feeds += 1
+            except Exception as e:
+                errors.append(f"Error al procesar {url}: {str(e)}")
+        
+        if created_feeds > 0:
+            db.session.commit()
+            flash(f'Se han creado {created_feeds} feeds correctamente.', 'success')
+        
+        if errors:
+            for error in errors:
+                flash(error, 'danger')
+            
+        return redirect(url_for('dashboard'))
+        
+    return render_template('import_feeds.html')

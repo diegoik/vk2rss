@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Importar múltiples feeds{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Importar múltiples feeds</h1>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al panel
+        </a>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Instrucciones</h5>
+            <p class="card-text">
+                Ingresa un listado de URLs de VK, una por línea. Puedes incluir comentarios después de cada URL usando el símbolo # para definir el título del feed.
+                <br>Por ejemplo:
+            </p>
+            <pre class="bg-light p-3 rounded">
+vk.com/wall-142369524  # Noticias de tecnología
+vk.com/wall-161750167?own=1  # Canal oficial
+            </pre>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Formatos de URL compatibles:
+                <ul class="mb-0 mt-2">
+                    <li>vk.com/wall-123456</li>
+                    <li>vk.com/wall-123456?own=1</li>
+                    <li>https://vk.com/wall-123456</li>
+                    <li>https://vk.com/group_name</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('import_feeds') }}">
+                <div class="mb-3">
+                    <label for="urls" class="form-label">Lista de URLs</label>
+                    <textarea class="form-control font-monospace" id="urls" name="urls" rows="10" placeholder="Ingresa tus URLs, una por línea"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="default_title" class="form-label">Título por defecto</label>
+                    <input type="text" class="form-control" id="default_title" name="default_title" placeholder="Se usará si no se proporciona un título específico">
+                    <div class="form-text">Si no se especifica, se usará el título del grupo o canal de VK.</div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="items_count" class="form-label">Número de publicaciones por feed</label>
+                            <input type="number" class="form-control" id="items_count" name="items_count" value="20" min="1" max="100">
+                            <div class="form-text">Cantidad de publicaciones que aparecerán en cada feed RSS.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3 mt-md-4">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" id="include_attachments" name="include_attachments" value="1" checked>
+                                <label class="form-check-label" for="include_attachments">Incluir adjuntos (imágenes, enlaces, etc.)</label>
+                            </div>
+                            
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="is_public" name="is_public" value="1">
+                                <label class="form-check-label" for="is_public">Hacer feeds públicos</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-file-import"></i> Importar feeds
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
