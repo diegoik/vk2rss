@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}VK2RSS - Convert VKontakte Content to RSS Feeds{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="text-center mb-5">
+                <h1 class="display-4 mb-3">
+                    <i class="fas fa-rss text-primary"></i> VK2RSS
+                </h1>
+                <h2 class="h4 mb-4">Convert VKontakte content to RSS feeds</h2>
+                <p class="lead">
+                    Stay updated with VK content in your favorite RSS reader. Follow public pages, groups, and users.
+                </p>
+                
+                <div class="mt-5">
+                    {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg me-2">
+                            <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                        </a>
+                        <a href="{{ url_for('add_feed') }}" class="btn btn-success btn-lg">
+                            <i class="fas fa-plus"></i> Add New Feed
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-2">
+                            <i class="fas fa-user-plus"></i> Register
+                        </a>
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-5 mb-3 text-primary">
+                        <i class="fas fa-rss"></i>
+                    </div>
+                    <h3 class="card-title h5">Any VK Content to RSS</h3>
+                    <p class="card-text">
+                        Convert posts from public pages, groups, and user profiles into standard RSS feeds.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-5 mb-3 text-primary">
+                        <i class="fas fa-newspaper"></i>
+                    </div>
+                    <h3 class="card-title h5">Custom Feeds</h3>
+                    <p class="card-text">
+                        Configure how many posts to include, whether to include images, and more.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="display-5 mb-3 text-primary">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3 class="card-title h5">Private or Public</h3>
+                    <p class="card-text">
+                        Keep your feeds private with secure tokens or make them public for anyone to use.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card border-0 shadow">
+                <div class="card-body p-4">
+                    <h2 class="h4 mb-4 text-center">How It Works</h2>
+                    
+                    <div class="d-flex mb-4">
+                        <div class="me-3 fs-3 text-primary">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <h3 class="h5 mb-2">1. Create an account</h3>
+                            <p class="mb-0">Sign up for a free account to start creating RSS feeds.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-4">
+                        <div class="me-3 fs-3 text-primary">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <div>
+                            <h3 class="h5 mb-2">2. Add a VK source</h3>
+                            <p class="mb-0">Enter the URL or ID of a VK public page, group, or user profile.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-4">
+                        <div class="me-3 fs-3 text-primary">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div>
+                            <h3 class="h5 mb-2">3. Configure your feed</h3>
+                            <p class="mb-0">Choose how many posts to include and other options.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex">
+                        <div class="me-3 fs-3 text-primary">
+                            <i class="fas fa-rss-square"></i>
+                        </div>
+                        <div>
+                            <h3 class="h5 mb-2">4. Use your RSS feed</h3>
+                            <p class="mb-0">Copy the generated RSS URL into your favorite feed reader.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('add_feed') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Your First Feed
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('register') }}" class="btn btn-primary">
+                                <i class="fas fa-user-plus"></i> Get Started
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}My Feeds - VK2RSS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">My RSS Feeds</h1>
+        <a href="{{ url_for('add_feed') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Feed
+        </a>
+    </div>
+    
+    {% if feeds %}
+        <div class="card border-0 shadow mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>VK Source</th>
+                                <th>Last Updated</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feed in feeds %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ feed.title }}</div>
+                                        <small class="text-muted">{{ feed.description|truncate(50) }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ feed.vk_source_type }}</span>
+                                        {{ feed.vk_source_id }}
+                                    </td>
+                                    <td>
+                                        {% if feed.last_fetched %}
+                                            <span title="{{ format_datetime(feed.last_fetched) }}">
+                                                {{ feed.last_fetched|humanize }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if feed.is_public %}
+                                            <span class="badge bg-success">Public</span>
+                                        {% else %}
+                                            <span class="badge bg-info">Private</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="feedActionDropdown{{ feed.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Actions
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="feedActionDropdown{{ feed.id }}">
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ url_for('preview_feed', feed_id=feed.id) }}">
+                                                        <i class="fas fa-eye"></i> Preview
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ get_feed_url(feed) }}" target="_blank">
+                                                        <i class="fas fa-rss"></i> View RSS
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="#" onclick="copyToClipboard('{{ get_feed_url(feed) }}'); return false;">
+                                                        <i class="fas fa-copy"></i> Copy URL
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ url_for('edit_feed', feed_id=feed.id) }}">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item text-danger" href="#" onclick="confirmDelete('{{ feed.title }}', '{{ url_for('delete_feed', feed_id=feed.id) }}'); return false;">
+                                                        <i class="fas fa-trash"></i> Delete
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="card border-0 shadow text-center p-5">
+            <div class="card-body">
+                <i class="fas fa-rss-square text-secondary mb-3" style="font-size: 3rem;"></i>
+                <h2 class="h4">No RSS feeds yet</h2>
+                <p class="text-muted">You haven't created any RSS feeds yet. Create your first feed to get started.</p>
+                <a href="{{ url_for('add_feed') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Your First Feed
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the feed "<span id="feedTitle"></span>"?
+                <p class="text-danger mt-2">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmDelete(title, deleteUrl) {
+        document.getElementById('feedTitle').textContent = title;
+        document.getElementById('deleteForm').action = deleteUrl;
+        
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+    
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('RSS feed URL copied to clipboard!');
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+        });
+    }
+</script>
+{% endblock %}

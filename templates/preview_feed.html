@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block title %}Preview Feed - {{ feed.title }} - VK2RSS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Feed Preview</h1>
+                <div>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <a href="{{ url_for('edit_feed', feed_id=feed.id) }}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Feed
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-4">
+                        {% if source_info.image %}
+                            <img src="{{ source_info.image }}" alt="{{ source_info.title }}" class="me-3 rounded" style="width: 64px; height: 64px;">
+                        {% else %}
+                            <div class="bg-secondary rounded d-flex align-items-center justify-content-center me-3" style="width: 64px; height: 64px;">
+                                <i class="fas fa-rss text-white" style="font-size: 24px;"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div>
+                            <h2 class="h4 mb-1">{{ feed.title }}</h2>
+                            <p class="text-muted mb-0">{{ feed.description or source_info.description }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h3 class="h5">Feed Information</h3>
+                        <table class="table table-sm">
+                            <tr>
+                                <th style="width: 200px;">VK Source</th>
+                                <td>
+                                    <span class="badge bg-secondary">{{ feed.vk_source_type }}</span>
+                                    <a href="{{ source_info.link }}" target="_blank">
+                                        {{ feed.vk_source_id }}
+                                        <i class="fas fa-external-link-alt fa-xs"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Posts Count</th>
+                                <td>{{ feed.items_count }}</td>
+                            </tr>
+                            <tr>
+                                <th>Include Attachments</th>
+                                <td>{{ 'Yes' if feed.include_attachments else 'No' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Include Comments</th>
+                                <td>{{ 'Yes' if feed.include_comments else 'No' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Access</th>
+                                <td>
+                                    {% if feed.is_public %}
+                                        <span class="badge bg-success">Public</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Private</span>
+                                        <small class="text-muted">(token required)</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Last Updated</th>
+                                <td>
+                                    {% if feed.last_fetched %}
+                                        {{ format_datetime(feed.last_fetched) }}
+                                    {% else %}
+                                        <span class="text-muted">Never</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div>
+                        <h3 class="h5">RSS Feed URL</h3>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" value="{{ get_feed_url(feed) }}" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('{{ get_feed_url(feed) }}')">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <a href="{{ get_feed_url(feed) }}" target="_blank" class="btn btn-outline-primary">
+                                <i class="fas fa-external-link-alt"></i> View
+                            </a>
+                        </div>
+                        <small class="text-muted">Use this URL in your RSS reader application.</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow">
+                <div class="card-header bg-transparent">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-eye me-2"></i> Feed Preview
+                    </h3>
+                </div>
+                <div class="card-body p-0">
+                    <div id="feedPreview" class="p-4">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading feed preview...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-transparent">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-info-circle me-2"></i> RSS Feed Usage
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <h4 class="h6">Popular RSS Readers</h4>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i> Feedly
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i> Inoreader
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i> Newsblur
+                        </li>
+                        <li class="list-group-item bg-transparent">
+                            <i class="fas fa-check-circle text-success me-2"></i> The Old Reader
+                        </li>
+                    </ul>
+                    
+                    <h4 class="h6">How to Use</h4>
+                    <ol class="mb-0">
+                        <li class="mb-2">Copy the RSS feed URL</li>
+                        <li class="mb-2">Open your RSS reader app or website</li>
+                        <li class="mb-2">Add a new subscription/feed</li>
+                        <li>Paste the URL and save</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow">
+                <div class="card-header bg-transparent">
+                    <h3 class="h5 mb-0">
+                        <i class="fas fa-cog me-2"></i> Actions
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('edit_feed', feed_id=feed.id) }}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Feed
+                        </a>
+                        <a href="{{ get_feed_url(feed) }}" target="_blank" class="btn btn-outline-secondary">
+                            <i class="fas fa-rss"></i> View Raw RSS
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="fas fa-trash"></i> Delete Feed
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the feed "{{ feed.title }}"?
+                <p class="text-danger mt-2">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('delete_feed', feed_id=feed.id) }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadFeedPreview();
+    });
+    
+    function loadFeedPreview() {
+        const previewContainer = document.getElementById('feedPreview');
+        
+        // Fetch the RSS feed content
+        fetch('{{ get_feed_url(feed) }}')
+            .then(response => response.text())
+            .then(xmlText => {
+                // Parse the XML
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                
+                // Extract items from the feed
+                const items = xmlDoc.querySelectorAll('item');
+                
+                if (items.length === 0) {
+                    previewContainer.innerHTML = `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No posts found in this feed.
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Build preview HTML
+                let previewHtml = '';
+                
+                // Limit to first 5 items for preview
+                const itemsToShow = Math.min(items.length, 5);
+                
+                for (let i = 0; i < itemsToShow; i++) {
+                    const item = items[i];
+                    const title = item.querySelector('title')?.textContent || 'No title';
+                    const link = item.querySelector('link')?.textContent || '#';
+                    const pubDate = item.querySelector('pubDate')?.textContent || '';
+                    const description = item.querySelector('description')?.textContent || '';
+                    
+                    // Format publish date
+                    let formattedDate = '';
+                    if (pubDate) {
+                        const date = new Date(pubDate);
+                        formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                    }
+                    
+                    previewHtml += `
+                        <div class="card mb-3">
+                            <div class="card-header bg-transparent">
+                                <h5 class="card-title mb-0">
+                                    <a href="${link}" target="_blank" class="text-decoration-none">
+                                        ${title}
+                                    </a>
+                                </h5>
+                                <small class="text-muted">${formattedDate}</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="card-text">
+                                    ${description}
+                                </div>
+                                <a href="${link}" target="_blank" class="btn btn-sm btn-outline-primary mt-3">
+                                    <i class="fas fa-external-link-alt"></i> View original post
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Add a message if there are more items
+                if (items.length > itemsToShow) {
+                    previewHtml += `
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Showing ${itemsToShow} of ${items.length} posts. 
+                            <a href="${'{{ get_feed_url(feed) }}'}" target="_blank">View full feed</a>
+                        </div>
+                    `;
+                }
+                
+                previewContainer.innerHTML = previewHtml;
+            })
+            .catch(error => {
+                console.error('Error loading feed:', error);
+                previewContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading feed preview. ${error.message}
+                    </div>
+                `;
+            });
+    }
+    
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('RSS feed URL copied to clipboard!');
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+        });
+    }
+</script>
+{% endblock %}

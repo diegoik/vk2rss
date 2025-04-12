@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Feed - VK2RSS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow">
+                <div class="card-body p-4">
+                    <h1 class="h3 mb-4">Edit RSS Feed</h1>
+                    
+                    <form method="POST" id="editFeedForm">
+                        <!-- Feed Title and Description -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label">Feed Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required value="{{ feed.title }}">
+                            <div class="form-text">A descriptive name for this feed (will be displayed in your RSS reader)</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="2">{{ feed.description }}</textarea>
+                        </div>
+                        
+                        <!-- VK Source Information -->
+                        <h4 class="h5 mb-3">VK Source</h4>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Source Type</label>
+                            <div class="d-flex">
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="radio" name="vk_source_type" id="sourceTypeUser" value="user" {{ 'checked' if feed.vk_source_type == 'user' else '' }}>
+                                    <label class="form-check-label" for="sourceTypeUser">
+                                        User
+                                    </label>
+                                </div>
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="radio" name="vk_source_type" id="sourceTypeGroup" value="group" {{ 'checked' if feed.vk_source_type == 'group' else '' }}>
+                                    <label class="form-check-label" for="sourceTypeGroup">
+                                        Group
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="vk_source_type" id="sourceTypePage" value="page" {{ 'checked' if feed.vk_source_type == 'page' else '' }}>
+                                    <label class="form-check-label" for="sourceTypePage">
+                                        Public Page
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="vk_source_id" class="form-label">VK ID or Screen Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-at"></i></span>
+                                <input type="text" class="form-control" id="vk_source_id" name="vk_source_id" required value="{{ feed.vk_source_id }}">
+                                <button type="button" class="btn btn-outline-secondary" id="checkSource">
+                                    <i class="fas fa-check"></i> Verify
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                For users: ID number or screen name (without @).<br>
+                                For groups/pages: ID number or screen name (e.g., "group_name" from vk.com/group_name)
+                            </div>
+                            <div id="sourceResult" class="mt-2 d-none">
+                                <!-- Source verification result will be shown here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Feed Options -->
+                        <h4 class="h5 mb-3">Feed Options</h4>
+                        
+                        <div class="mb-3">
+                            <label for="items_count" class="form-label">Number of posts to include</label>
+                            <select class="form-select" id="items_count" name="items_count">
+                                <option value="5" {{ 'selected' if feed.items_count == 5 else '' }}>5 posts</option>
+                                <option value="10" {{ 'selected' if feed.items_count == 10 else '' }}>10 posts</option>
+                                <option value="20" {{ 'selected' if feed.items_count == 20 else '' }}>20 posts</option>
+                                <option value="50" {{ 'selected' if feed.items_count == 50 else '' }}>50 posts</option>
+                                <option value="100" {{ 'selected' if feed.items_count == 100 else '' }}>100 posts</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="include_attachments" name="include_attachments" {{ 'checked' if feed.include_attachments else '' }}>
+                                <label class="form-check-label" for="include_attachments">Include attachments (photos, links, etc.)</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="include_comments" name="include_comments" {{ 'checked' if feed.include_comments else '' }}>
+                                <label class="form-check-label" for="include_comments">Include comments count</label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_public" name="is_public" {{ 'checked' if feed.is_public else '' }}>
+                                <label class="form-check-label" for="is_public">Make this feed public (no token required)</label>
+                            </div>
+                        </div>
+                        
+                        <!-- Feed URL Information -->
+                        <div class="mb-4">
+                            <label class="form-label">RSS Feed URL</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" readonly value="{{ get_feed_url(feed) }}">
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('{{ get_feed_url(feed) }}')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">Use this URL in your RSS reader</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkButton = document.getElementById('checkSource');
+        const sourceResult = document.getElementById('sourceResult');
+        
+        // Verify source button click handler
+        checkButton.addEventListener('click', function() {
+            const sourceType = document.querySelector('input[name="vk_source_type"]:checked').value;
+            const sourceId = document.getElementById('vk_source_id').value.trim();
+            
+            if (!sourceId) {
+                alert('Please enter a VK ID or screen name');
+                return;
+            }
+            
+            sourceResult.innerHTML = '<div class="spinner-border spinner-border-sm text-secondary" role="status"><span class="visually-hidden">Loading...</span></div> Verifying...';
+            sourceResult.classList.remove('d-none');
+            
+            // Send request to check if source exists
+            fetch('/api/check-vk-source', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    source_type: sourceType,
+                    source_id: sourceId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    // If source exists, show success message
+                    sourceResult.innerHTML = `
+                        <div class="alert alert-success mb-0">
+                            <strong>Source verified!</strong><br>
+                            ${data.info.title}
+                        </div>
+                    `;
+                } else {
+                    // If source doesn't exist, show error message
+                    sourceResult.innerHTML = `
+                        <div class="alert alert-danger mb-0">
+                            <strong>Error:</strong> ${data.message}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                sourceResult.innerHTML = `
+                    <div class="alert alert-danger mb-0">
+                        <strong>Error:</strong> Failed to verify source. Please try again.
+                    </div>
+                `;
+            });
+        });
+    });
+    
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('RSS feed URL copied to clipboard!');
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+        });
+    }
+</script>
+{% endblock %}
