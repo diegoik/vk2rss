@@ -93,8 +93,28 @@ def logout():
 @login_required
 def dashboard():
     """User dashboard showing their feeds."""
-    feeds = VKFeed.query.filter_by(user_id=current_user.id).all()
-    return render_template('dashboard.html', feeds=feeds)
+    # Obtener parámetros de ordenamiento
+    sort_by = request.args.get('sort', 'title')  # Por defecto, ordenar por título
+    direction = request.args.get('dir', 'asc')   # Por defecto, orden ascendente
+    
+    # Construir la consulta base
+    query = VKFeed.query.filter_by(user_id=current_user.id)
+    
+    # Aplicar ordenamiento según el parámetro
+    if sort_by == 'title':
+        query = query.order_by(VKFeed.title.asc() if direction == 'asc' else VKFeed.title.desc())
+    elif sort_by == 'source':
+        query = query.order_by(VKFeed.vk_source_id.asc() if direction == 'asc' else VKFeed.vk_source_id.desc())
+    elif sort_by == 'updated':
+        query = query.order_by(VKFeed.last_fetched.desc() if direction == 'asc' else VKFeed.last_fetched.asc())
+    else:
+        # Ordenamiento por defecto
+        query = query.order_by(VKFeed.title.asc())
+    
+    # Ejecutar la consulta
+    feeds = query.all()
+    
+    return render_template('dashboard.html', feeds=feeds, sort_by=sort_by, direction=direction)
 
 @app.route('/feeds/add', methods=['GET', 'POST'])
 @login_required
