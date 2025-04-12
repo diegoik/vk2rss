@@ -66,7 +66,7 @@ class VKAPIClient:
             logger.error(f"Error making request to VK API: {e}")
             raise VKAPIError(f"Request to VK API failed: {e}")
         
-    def get_wall_posts(self, owner_id, count=20, offset=0):
+    def get_wall_posts(self, owner_id, count=20, offset=0, own=None, filter_type=None):
         """
         Get posts from a user or community wall.
         
@@ -74,6 +74,8 @@ class VKAPIClient:
             owner_id: ID of the user or community (negative for communities) or domain
             count: Number of posts to retrieve
             offset: Offset for pagination
+            own: If True, get only owner's posts (default: None)
+            filter_type: Filter for types of posts (all, owner, others)
             
         Returns:
             List of wall posts
@@ -84,13 +86,32 @@ class VKAPIClient:
             'extended': 1  # Get extended information (profiles, groups)
         }
         
+        # Parse URL parameters if this is a wall URL with query string
+        url_params = {}
+        if isinstance(owner_id, str) and '?' in owner_id:
+            from urllib.parse import urlparse, parse_qs
+            parsed_url = urlparse(owner_id if owner_id.startswith('http') else f"https://{owner_id}")
+            url_params = parse_qs(parsed_url.query)
+            logger.debug(f"URL parameters: {url_params}")
+            
+            # Check for own=1 parameter in URL
+            if 'own' in url_params and url_params['own'] == ['1']:
+                own = True
+        
         # Process the owner_id parameter properly
-        if '/' in owner_id or 'vk.com' in owner_id:
+        if isinstance(owner_id, str) and ('/' in owner_id or 'vk.com' in owner_id):
             owner_id = extract_vk_id_from_url(owner_id)
             logger.debug(f"Extracted ID for wall.get: {owner_id}")
         
+        # Add filter based on parameters
+        if own or filter_type:
+            if own:
+                params['filter'] = 'owner'
+            elif filter_type:
+                params['filter'] = filter_type
+        
         # Check if owner_id is numeric ID or domain name
-        if owner_id.lstrip('-').isdigit():
+        if isinstance(owner_id, str) and owner_id.lstrip('-').isdigit():
             params['owner_id'] = owner_id
         else:
             params['domain'] = owner_id
@@ -181,12 +202,23 @@ def extract_vk_id_from_url(url):
         Extracted ID or the original string if no ID is found
     """
     import re
+    from urllib.parse import urlparse, parse_qs
     
     if not url:
         return url
     
     # Log the original URL for debugging
     logger.debug(f"Extracting ID from URL: {url}")
+    
+    # Handle wall posts with query parameters (e.g., vk.com/wall-161750167?own=1)
+    if '?' in url:
+        # Parse URL and extract base path without query parameters
+        parsed_url = urlparse(url if url.startswith('http') else f"https://{url}")
+        base_url = parsed_url.path
+        # Extract parameters for later use if needed
+        params = parse_qs(parsed_url.query)
+        logger.debug(f"Parsed URL path: {base_url}, params: {params}")
+        url = base_url  # Continue processing with the cleaned URL
     
     # Extract numeric ID for a group with a negative ID
     group_id_pattern = r'group(-?\d+)'
@@ -200,11 +232,13 @@ def extract_vk_id_from_url(url):
     if user_id_match:
         return user_id_match.group(1)
     
-    # Extract ID from wall URL pattern
+    # Extract ID from wall URL pattern (this is the most common format you use)
     wall_pattern = r'wall(-?\d+)'
     wall_match = re.search(wall_pattern, url)
     if wall_match:
-        return wall_match.group(1)
+        group_id = wall_match.group(1)
+        logger.debug(f"Extracted group ID from wall: {group_id}")
+        return group_id
     
     # Extract numeric group ID after minus sign (common in URLs like vk.com/public-123456)
     minus_id_pattern = r'(?:public|club)-(\d+)'
@@ -243,13 +277,17 @@ def get_source_info(source_type, source_id):
     """
     client = VKAPIClient()
     
+    # Default to 'group' if no source type is provided
+    if not source_type:
+        source_type = 'group'  # Most common case
+    
     # Process URLs or complex IDs
-    if '/' in source_id or 'vk.com' in source_id:
+    if isinstance(source_id, str) and ('/' in source_id or 'vk.com' in source_id):
         source_id = extract_vk_id_from_url(source_id)
         logger.debug(f"Extracted ID from URL: {source_id}")
     
     # Try to resolve screen name if it's not a numeric ID
-    if not source_id.lstrip('-').isdigit():
+    if isinstance(source_id, str) and not source_id.lstrip('-').isdigit():
         try:
             resolved = client.resolve_screen_name(source_id)
             if resolved:
@@ -265,6 +303,15 @@ def get_source_info(source_type, source_id):
         except VKAPIError as e:
             logger.warning(f"Failed to resolve screen name {source_id}: {e}")
     
+    # If source_id is a string that represents a negative number, it's likely a group
+    if isinstance(source_id, str) and source_id.startswith('-') and source_id[1:].isdigit():
+        source_type = 'group'
+    # If source_id is a string that represents a positive number, try to determine if it's a user or group
+    elif isinstance(source_id, str) and source_id.isdigit():
+        # For simplicity, we'll assume it's a user ID if it's positive
+        if not source_type or source_type not in ['user', 'group', 'page']:
+            source_type = 'user'
+    
     # Get info based on the source type
     try:
         if source_type == 'user':
@@ -278,7 +325,14 @@ def get_source_info(source_type, source_id):
                     'image': user.get('photo_100')
                 }
         else:  # group or page
-            numeric_id = abs(int(source_id)) if str(source_id).lstrip('-').isdigit() else source_id
+            # Strip the minus sign if it's there and convert to int
+            if isinstance(source_id, str) and source_id.startswith('-') and source_id[1:].isdigit():
+                numeric_id = source_id[1:]  # Remove the minus sign for the API call
+            elif isinstance(source_id, str) and source_id.isdigit():
+                numeric_id = source_id
+            else:
+                numeric_id = source_id  # Keep as is for domain names
+                
             info = client.get_group_info(numeric_id)
             if info and len(info) > 0:
                 group = info[0]
@@ -292,10 +346,11 @@ def get_source_info(source_type, source_id):
         logger.error(f"Failed to get source info for {source_type}:{source_id}: {e}")
     
     # Default fallback info
+    type_str = source_type if source_type else "Source"
     return {
-        'title': f"VK {source_type.capitalize()} {source_id}",
-        'link': f"https://vk.com/{source_id}",
-        'description': f"Content from VK {source_type} {source_id}",
+        'title': f"VK {type_str.capitalize()} {source_id}",
+        'link': f"https://vk.com/{source_id}" if not isinstance(source_id, int) else f"https://vk.com/id{source_id}",
+        'description': f"Content from VK {type_str} {source_id}",
         'image': None
     }
 
