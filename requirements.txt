@@ -1,5 +1,6 @@
 Flask
 flask_sqlalchemy
 flask_login
+feedgen
 requests
 gunicorn
