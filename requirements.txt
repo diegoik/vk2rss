@@ -5,3 +5,4 @@ feedgen
 requests
 gunicorn
 pytz
+translate
