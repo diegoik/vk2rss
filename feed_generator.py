@@ -9,7 +9,6 @@ import pytz
 from vk_api import VKAPIClient, get_source_info, format_post_content, VKAPIError
 from models import VKFeed, FeedCache
 from app import db
-from translator import translate_text
 
 logger = logging.getLogger(__name__)
 
@@ -93,22 +92,11 @@ class RSSFeedGenerator:
             fg = FeedGenerator()
             fg.id(url_for('get_feed', feed_id=self.feed_config.id, token=self.feed_config.access_token, _external=True))
             
-            # Obtener título original y traducirlo
-            original_title = self.feed_config.title or source_info['title']
-            try:
-                translated_title = translate_text(original_title, source_lang='ru', target_lang='es')
-                if translated_title and translated_title != original_title:
-                    logger.info(f"Título del feed traducido: '{original_title}' -> '{translated_title}'")
-                    fg.title(translated_title)
-                else:
-                    fg.title(original_title)
-            except Exception as e:
-                logger.warning(f"Error al traducir título del feed: {e}")
-                fg.title(original_title)
-                
+            # Usar título original directamente
+            fg.title(self.feed_config.title or source_info['title'])
             fg.link(href=source_info['link'], rel='alternate')
             fg.description(self.feed_config.description or source_info['description'])
-            fg.language('es')  # Cambiamos el idioma a español ya que estamos traduciendo
+            fg.language('ru')  # Idioma original del contenido
             
             # Set feed image if available
             if source_info.get('image'):
@@ -173,16 +161,6 @@ class RSSFeedGenerator:
         title = text.split('\n')[0][:100] if text else f"Post {post_id}"
         if not title.strip():
             title = f"Post from {datetime.fromtimestamp(post.get('date', 0))}"
-            
-        # Traducir el título del ruso al español
-        try:
-            translated_title = translate_text(title, source_lang='ru', target_lang='es')
-            # Si la traducción fue exitosa, utilizar el título traducido
-            if translated_title and translated_title != title:
-                logger.info(f"Título traducido: '{title}' -> '{translated_title}'")
-                title = translated_title
-        except Exception as e:
-            logger.warning(f"Error al traducir título: {e}")
             
         entry.title(title)
         
